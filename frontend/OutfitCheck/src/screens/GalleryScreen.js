@@ -1,8 +1,10 @@
 import React from 'react';
+import { useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function GalleryScreen({ closet }) {
+    const [activeView, setActiveView] = useState('TODO');
     console.log('🧥 Imagenes recibidas:', closet);
 
     return (
@@ -10,7 +12,7 @@ export default function GalleryScreen({ closet }) {
             {/* HEADER */}
             <View style={styles.header}>
                 <Image style={styles.avatar} source={require('../../assets/user_icon.png')} />
-                <Text style={styles.username}>Name user</Text>
+                <Text style={styles.username}>Jgarcia3199</Text>
 
                 <View style={styles.headerIcons}>
                     <Ionicons name="heart-outline" size={24} color="#333" style={styles.icon} />
@@ -18,8 +20,16 @@ export default function GalleryScreen({ closet }) {
                 </View>
 
                 <View style={styles.toggle}>
-                    <Text style={styles.toggleText}>TODO</Text>
-                    <Text style={[styles.toggleText, { color: '#888' }]}>ARMARIOS</Text>
+                    <TouchableOpacity onPress={() => setActiveView('TODO')}>
+                        <Text style={[styles.toggleText, activeView === 'TODO' ? styles.active : styles.inactive]}>
+                            TODO
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => setActiveView('ARMARIOS')}>
+                        <Text style={[styles.toggleText, activeView === 'ARMARIOS' ? styles.active : styles.inactive]}>
+                            ARMARIOS
+                        </Text>
+                    </TouchableOpacity>
                 </View>
             </View>
 
@@ -35,14 +45,18 @@ export default function GalleryScreen({ closet }) {
 
             {/* GALERÍA */}
             <View style={styles.galleryContainer}>
-                {closet.length > 0 ? (
-                    closet.map((item, index) => (
-                        <View key={index} style={styles.greenCard}>
-                            <Image source={{ uri: item }} style={styles.galleryImage} />
-                        </View>
-                    ))
+                {activeView === 'TODO' ? (
+                    closet.length > 0 ? (
+                        closet.map((item, index) => (
+                            <View key={index} style={styles.greenCard}>
+                                <Image source={{ uri: item }} style={styles.galleryImage} />
+                            </View>
+                        ))
+                    ) : (
+                        <Text style={styles.emptyText}>Tu armario está vacío</Text>
+                    )
                 ) : (
-                    <Text style={styles.emptyText}>Tu armario está vacío</Text>
+                    <Text style={styles.emptyText}>Aquí se mostrarán tus armarios personalizados.</Text>
                 )}
             </View>
         </ScrollView>
@@ -96,9 +110,9 @@ const styles = StyleSheet.create({
     categories: {
         flexDirection: 'row',
         justifyContent: 'space-around',
-        alignItems: 'center',
+        alignItems: 'start',
         paddingVertical: 10,
-        paddingHorizontal: 20,
+        paddingHorizontal: 40,
     },
     categoryCircle: {
         width: 55,
@@ -117,7 +131,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     categoryLabel: {
-        fontSize: 12,
+        fontSize: 10,
         fontWeight: '500',
         color: '#333',
     },
@@ -134,5 +148,21 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         borderRadius: 16,
         resizeMode: 'cover',
+    },
+    active: {
+        color: '#000',
+        fontWeight: 'bold',
+        fontSize: 20,
+        
+    },
+    inactive: {
+        color: '#888',
+        fontSize: 16,
+    },
+    emptyText: {
+        textAlign: 'center',
+        marginTop: 40,
+        color: '#999',
+        fontSize: 16,
     },
 });
