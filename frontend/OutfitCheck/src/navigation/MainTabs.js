@@ -1,23 +1,22 @@
 import React, { useState } from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { TouchableOpacity, Alert, View, Modal, ActivityIndicator, Text, StyleSheet } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-
 import GalleryScreen from '../screens/GalleryScreen';
 import { removeBackground } from '../utils/removeBackground';
-
+import ReviewModal from '../../components/ReviewModal'; 
 const Tab = createBottomTabNavigator();
 
 export default function MainTabs({ closet, onAddToCloset }) {
-    const [loading, setLoading] = useState(false);
+    const [reviewImage, setReviewImage] = useState(null);
+    const [modalVisible, setModalVisible] = useState(false);
 
-    const handleDirectUpload = async (navigation) => {
+    const handleDirectUpload = async () => {
         try {
             const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
             if (status !== 'granted') {
-                Alert.alert('Permiso denegado', 'Se necesita acceso a la galería.');
+                alert('Permiso denegado');
                 return;
             }
 
@@ -27,17 +26,13 @@ export default function MainTabs({ closet, onAddToCloset }) {
             });
 
             if (!result.canceled) {
-                setLoading(true); // ⏳ Mostrar modal
                 const uri = result.assets[0].uri;
                 const noBgUri = await removeBackground(uri);
-                onAddToCloset(noBgUri);
-                setLoading(false); //  Ocultar modal
-                navigation.navigate('Galería');
+                setReviewImage(noBgUri);
+                setModalVisible(true); // 👉 Muestra el modal
             }
         } catch (error) {
-            setLoading(false);
-            Alert.alert('Error', 'No se pudo subir la imagen');
-            console.error(' Error en subida directa:', error);
+            console.error('Error al subir imagen:', error);
         }
     };
 
@@ -45,70 +40,46 @@ export default function MainTabs({ closet, onAddToCloset }) {
         <>
             <NavigationContainer>
                 <Tab.Navigator
-                    screenOptions={({ route, navigation }) => ({
+                    screenOptions={({ route }) => ({
                         tabBarIcon: ({ color, size }) => {
-                            let iconName = route.name === 'Galería' ? 'images' : 'cloud-upload';
+                            const iconName = route.name === 'Galería' ? 'images' : 'add-circle';
                             return <Ionicons name={iconName} size={size} color={color} />;
                         },
                         headerShown: false,
                         tabBarActiveTintColor: '#007AFF',
                         tabBarInactiveTintColor: 'gray',
-                        tabBarButton: (props) => {
-                            if (route.name === 'Subir') {
-                                return (
-                                    <TouchableOpacity
-                                        onPress={() => handleDirectUpload(navigation)}
-                                        accessibilityRole="button"
-                                        accessibilityState={props.accessibilityState}
-                                        style={props.style}
-                                    >
-                                        {props.children}
-                                    </TouchableOpacity>
-                                );
-                            }
-                            return <TouchableOpacity {...props} />;
-                        },
                     })}
                 >
                     <Tab.Screen name="Galería">
                         {() => <GalleryScreen closet={closet} />}
                     </Tab.Screen>
 
-                    <Tab.Screen name="Subir">
-                        {() => <View />} 
-                    </Tab.Screen>
+                    <Tab.Screen
+                        name="Subir"
+                        component={() => null}
+                        listeners={{
+                            tabPress: (e) => {
+                                e.preventDefault();
+                                handleDirectUpload();
+                            },
+                        }}
+                    />
                 </Tab.Navigator>
             </NavigationContainer>
 
-            {/* MODAL DE CARGA */}
-            <Modal visible={loading} transparent animationType="fade">
-                <View style={styles.modalContainer}>
-                    <View style={styles.modalContent}>
-                        <ActivityIndicator size="large" color="#007AFF" />
-                        <Text style={styles.modalText}>Procesando imagen...</Text>
-                    </View>
-                </View>
-            </Modal>
+            <ReviewModal
+                visible={modalVisible}
+                imageUri={reviewImage}
+                onSave={(imageData) => {
+                    onAddToCloset(imageData);
+                    setModalVisible(false);
+                    setReviewImage(null);
+                }}
+                onCancel={() => {
+                    setModalVisible(false);
+                    setReviewImage(null);
+                }}
+            />
         </>
     );
 }
-
-const styles = StyleSheet.create({
-    modalContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.3)',
-    },
-    modalContent: {
-        backgroundColor: '#fff',
-        padding: 30,
-        borderRadius: 20,
-        alignItems: 'center',
-    },
-    modalText: {
-        marginTop: 15,
-        fontSize: 16,
-        color: '#333',
-    },
-});

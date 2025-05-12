@@ -1,18 +1,45 @@
-import React from 'react';
-import { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    Image,
+    TouchableOpacity,
+    ScrollView,
+    Modal,
+    Button,
+    FlatList
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function GalleryScreen({ closet }) {
-    const [activeView, setActiveView] = useState('TODO');
-    console.log('🧥 Imagenes recibidas:', closet);
+const categories = [
+    'Camisetas', 'Camisas', 'Pantalones', 'Shorts', 'Faldas',
+    'Chaquetas', 'Abrigos', 'Zapatos', 'Accesorios', 'Vestidos'
+];
+
+export default function GalleryScreen({ closet, reviewImage, onReviewConfirm }) {
+    const [selectedCategory, setSelectedCategory] = useState(null);
+    const [modalVisible, setModalVisible] = useState(false);
+
+    useEffect(() => {
+        if (reviewImage) {
+            setModalVisible(true);
+        }
+    }, [reviewImage]);
+
+    const handleConfirm = () => {
+        if (!selectedCategory) return;
+        onReviewConfirm({ image: reviewImage, category: selectedCategory });
+        setSelectedCategory(null);
+        setModalVisible(false);
+    };
 
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
             {/* HEADER */}
             <View style={styles.header}>
                 <Image style={styles.avatar} source={require('../../assets/user_icon.png')} />
-                <Text style={styles.username}>Jgarcia3199</Text>
+                <Text style={styles.username}>Name user</Text>
 
                 <View style={styles.headerIcons}>
                     <Ionicons name="heart-outline" size={24} color="#333" style={styles.icon} />
@@ -20,16 +47,8 @@ export default function GalleryScreen({ closet }) {
                 </View>
 
                 <View style={styles.toggle}>
-                    <TouchableOpacity onPress={() => setActiveView('TODO')}>
-                        <Text style={[styles.toggleText, activeView === 'TODO' ? styles.active : styles.inactive]}>
-                            TODO
-                        </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => setActiveView('ARMARIOS')}>
-                        <Text style={[styles.toggleText, activeView === 'ARMARIOS' ? styles.active : styles.inactive]}>
-                            ARMARIOS
-                        </Text>
-                    </TouchableOpacity>
+                    <Text style={styles.toggleText}>TODO</Text>
+                    <Text style={[styles.toggleText, { color: '#888' }]}>ARMARIOS</Text>
                 </View>
             </View>
 
@@ -45,29 +64,74 @@ export default function GalleryScreen({ closet }) {
 
             {/* GALERÍA */}
             <View style={styles.galleryContainer}>
-                {activeView === 'TODO' ? (
-                    closet.length > 0 ? (
-                        closet.map((item, index) => (
-                            <View key={index} style={styles.greenCard}>
-                                <Image source={{ uri: item }} style={styles.galleryImage} />
-                            </View>
-                        ))
-                    ) : (
-                        <Text style={styles.emptyText}>Tu armario está vacío</Text>
-                    )
+                {closet.length > 0 ? (
+                    closet.map((item, index) => (
+                        <View key={index} style={styles.greenCard}>
+                            <Image source={{ uri: item.image }} style={styles.galleryImage} />
+                        </View>
+                    ))
                 ) : (
-                    <Text style={styles.emptyText}>Aquí se mostrarán tus armarios personalizados.</Text>
+                    <Text style={styles.emptyText}>Tu armario está vacío</Text>
                 )}
             </View>
+
+            {/* MODAL DE REVISIÓN */}
+            <Modal
+                visible={modalVisible}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        {reviewImage && (
+                            <Image source={{ uri: reviewImage }} style={styles.modalImage} />
+                        )}
+                        <Text style={styles.modalTitle}>Selecciona una categoría</Text>
+
+                        <ScrollView style={styles.modalScroll}>
+                            {categories.map((item) => (
+                                <TouchableOpacity
+                                    key={item}
+                                    style={[
+                                        styles.categoryItem,
+                                        selectedCategory === item && styles.categoryItemSelected,
+                                    ]}
+                                    onPress={() => setSelectedCategory(item)}
+                                >
+                                    <Text
+                                        style={[
+                                            styles.categoryItemText,
+                                            selectedCategory === item && { fontWeight: 'bold' },
+                                        ]}
+                                    >
+                                        {item}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+
+                        <TouchableOpacity
+                            style={[
+                                styles.saveButton,
+                                !selectedCategory && { backgroundColor: '#ccc' },
+                            ]}
+                            disabled={!selectedCategory}
+                            onPress={handleConfirm}
+                        >
+                            <Text style={styles.saveButtonText}>Guardar prenda</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </ScrollView>
     );
 }
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#fefce8' },
-    scrollContent: {
-        paddingBottom: 40
-    },
+    scrollContent: { paddingBottom: 40 },
+
     header: {
         margin: 20,
         marginTop: 60,
@@ -95,9 +159,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         gap: 10,
     },
-    icon: {
-        marginLeft: 12,
-    },
+    icon: { marginLeft: 12 },
     toggle: {
         flexDirection: 'row',
         justifyContent: 'space-around',
@@ -131,7 +193,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     categoryLabel: {
-        fontSize: 10,
+        fontSize: 12,
         fontWeight: '500',
         color: '#333',
     },
@@ -141,7 +203,6 @@ const styles = StyleSheet.create({
         padding: 15,
         margin: 20,
     },
-    
     galleryImage: {
         width: '100%',
         height: 400,
@@ -149,20 +210,65 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         resizeMode: 'cover',
     },
-    active: {
-        color: '#000',
-        fontWeight: 'bold',
-        fontSize: 20,
-        
-    },
-    inactive: {
-        color: '#888',
-        fontSize: 16,
-    },
     emptyText: {
         textAlign: 'center',
         marginTop: 40,
         color: '#999',
         fontSize: 16,
+    },
+
+    // MODAL
+    modalScroll: {
+        maxHeight: 200,
+        marginBottom: 20,
+    },
+    saveButton: {
+        backgroundColor: '#007AFF',
+        paddingVertical: 15,
+        borderRadius: 10,
+        alignItems: 'center',
+    },
+    saveButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    modalOverlay: {
+        flex: 1,
+        justifyContent: 'flex-end',
+        backgroundColor: 'rgba(0,0,0,0.3)',
+    },
+    modalContent: {
+        backgroundColor: '#fff',
+        padding: 20,
+        borderTopRightRadius: 30,
+        borderTopLeftRadius: 30,
+        maxHeight: '80%',
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        marginBottom: 15,
+        textAlign: 'center',
+    },
+    modalImage: {
+        width: '100%',
+        height: 250,
+        borderRadius: 16,
+        marginBottom: 20,
+    },
+    categoryItem: {
+        paddingVertical: 12,
+        paddingHorizontal: 15,
+        borderRadius: 10,
+        backgroundColor: '#f2f2f2',
+        marginBottom: 10,
+    },
+    categoryItemSelected: {
+        backgroundColor: '#d9e4d4',
+    },
+    categoryItemText: {
+        fontSize: 16,
+        color: '#333',
     },
 });
