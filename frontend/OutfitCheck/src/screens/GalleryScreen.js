@@ -7,10 +7,12 @@ import {
     TouchableOpacity,
     ScrollView,
     Modal,
-    Button,
     FlatList
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
 
 const categories = [
     'Camisetas', 'Camisas', 'Pantalones', 'Shorts', 'Faldas',
@@ -20,6 +22,7 @@ const categories = [
 export default function GalleryScreen({ closet, reviewImage, onReviewConfirm }) {
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
+    const navigation = useNavigation();
 
     useEffect(() => {
         if (reviewImage) {
@@ -35,6 +38,7 @@ export default function GalleryScreen({ closet, reviewImage, onReviewConfirm }) 
     };
 
     return (
+        <SafeAreaView style={styles.safeArea}>
         <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
             {/* HEADER */}
             <View style={styles.header}>
@@ -42,7 +46,9 @@ export default function GalleryScreen({ closet, reviewImage, onReviewConfirm }) 
                 <Text style={styles.username}>Name user</Text>
 
                 <View style={styles.headerIcons}>
-                    <Ionicons name="heart-outline" size={24} color="#333" style={styles.icon} />
+                    <TouchableOpacity onPress={() => navigation.navigate('Diseño')}>
+                        <Ionicons name="heart-outline" size={24} color="#333" style={styles.icon} />
+                    </TouchableOpacity>
                     <Ionicons name="settings-outline" size={24} color="#333" style={styles.icon} />
                 </View>
 
@@ -125,12 +131,18 @@ export default function GalleryScreen({ closet, reviewImage, onReviewConfirm }) 
                 </View>
             </Modal>
         </ScrollView>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#fefce8' },
     scrollContent: { paddingBottom: 40 },
+
+    safeArea: {
+        flex: 1,
+        backgroundColor: '#fefce8',
+    },
 
     header: {
         margin: 20,
@@ -217,7 +229,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
 
-    // MODAL
     modalScroll: {
         maxHeight: 200,
         marginBottom: 20,

@@ -2,17 +2,20 @@ import React, { useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import GalleryScreen from '../screens/GalleryScreen';
+import * as ImagePicker from 'expo-image-picker';
 import { removeBackground } from '../utils/removeBackground';
-import ReviewModal from '../../components/ReviewModal'; 
+import ReviewModal from '../../components/ReviewModal';
+import DesignScreen from '../screens/DesignScreen';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+
 const Tab = createBottomTabNavigator();
 
 export default function MainTabs({ closet, onAddToCloset }) {
     const [reviewImage, setReviewImage] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
 
-    const handleDirectUpload = async () => {
+    const handleDirectUpload = async ({ navigation }) => {
         try {
             const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
             if (status !== 'granted') {
@@ -29,7 +32,7 @@ export default function MainTabs({ closet, onAddToCloset }) {
                 const uri = result.assets[0].uri;
                 const noBgUri = await removeBackground(uri);
                 setReviewImage(noBgUri);
-                setModalVisible(true); // 👉 Muestra el modal
+                setModalVisible(true);
             }
         } catch (error) {
             console.error('Error al subir imagen:', error);
@@ -37,12 +40,15 @@ export default function MainTabs({ closet, onAddToCloset }) {
     };
 
     return (
-        <>
+        <SafeAreaProvider>
             <NavigationContainer>
                 <Tab.Navigator
                     screenOptions={({ route }) => ({
                         tabBarIcon: ({ color, size }) => {
-                            const iconName = route.name === 'Galería' ? 'images' : 'add-circle';
+                            let iconName;
+                            if (route.name === 'Galería') iconName = 'images';
+                            else if (route.name === 'Subir') iconName = 'add-circle';
+                            else if (route.name === 'Diseño') iconName = 'heart';
                             return <Ionicons name={iconName} size={size} color={color} />;
                         },
                         headerShown: false,
@@ -57,29 +63,27 @@ export default function MainTabs({ closet, onAddToCloset }) {
                     <Tab.Screen
                         name="Subir"
                         component={() => null}
-                        listeners={{
+                        listeners={({ navigation }) => ({
                             tabPress: (e) => {
                                 e.preventDefault();
-                                handleDirectUpload();
+                                handleDirectUpload({ navigation });
                             },
-                        }}
+                        })}
                     />
+
+                    <Tab.Screen name="Diseño" component={DesignScreen} />
                 </Tab.Navigator>
             </NavigationContainer>
 
             <ReviewModal
                 visible={modalVisible}
                 imageUri={reviewImage}
-                onSave={(imageData) => {
-                    onAddToCloset(imageData);
+                onClose={() => setModalVisible(false)}
+                onSave={(data) => {
+                    onAddToCloset(data);
                     setModalVisible(false);
-                    setReviewImage(null);
-                }}
-                onCancel={() => {
-                    setModalVisible(false);
-                    setReviewImage(null);
                 }}
             />
-        </>
+        </SafeAreaProvider>
     );
 }
