@@ -39,32 +39,6 @@ OutfitCheck es una app móvil desarrollada con **React Native** y **Expo** que p
 
 ---
 
-## 🔑 Configuración de Firebase
-
-1. Crea un proyecto en [Firebase Console](https://console.firebase.google.com)
-2. Activa **Authentication (email/password)** y **Firestore**
-3. Crea un archivo `src/firebase/firebaseConfig.js` con tu configuración:
-
-```js
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-
-const firebaseConfig = {
-  apiKey: 'YOUR_API_KEY',
-  authDomain: 'YOUR_DOMAIN',
-  projectId: 'YOUR_PROJECT_ID',
-  storageBucket: 'YOUR_BUCKET',
-  messagingSenderId: 'YOUR_SENDER_ID',
-  appId: 'YOUR_APP_ID',
-};
-
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-```
-
----
 
 ## 🧪 Correr la app en desarrollo
 
